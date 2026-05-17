@@ -6,7 +6,7 @@ import scrapeRoutes from "./routes/scrapeRoute.js";
 import datasetRoutes from "./routes/datasetRoute.js";
 import authRoutes from "./routes/authRoute.js";
 import { connectDb } from "./config/db.js";
-
+import mailRoute from "./routes/mailRoute.js";
 dotenv.config();
 
 const app = express();
@@ -27,7 +27,9 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api", scrapeRoutes);
 app.use("/api/dataset", datasetRoutes);
+app.use("/api/datasets", datasetRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api", mailRoute);
 
 const port = process.env.PORT || 5000;
 

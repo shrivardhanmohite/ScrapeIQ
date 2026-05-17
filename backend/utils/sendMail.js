@@ -1,43 +1,48 @@
-const sendMail = async () => {
+import nodemailer from "nodemailer";
 
-  if (!result?.result?.data?.length) {
-
-    alert("No dataset available.");
-
-    return;
-  }
-
-  const email = window.prompt(
-    "Enter recipient email"
-  );
-
-  if (!email || !email.trim()) {
-
-    return;
-  }
+export const sendDatasetMail = async (
+  to,
+  subject,
+  text
+) => {
 
   try {
 
-    const response = await axios.post(
-      "http://localhost:5000/api/send-mail",
-      {
-        email,
-        data: result.result.data
-      }
+    const transporter =
+      nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text,
+    };
+
+    const info =
+      await transporter.sendMail(
+        mailOptions
+      );
+
+    console.log(
+      "Mail sent:",
+      info.response
     );
 
-    alert(
-      response.data.message ||
-      "Dataset mailed successfully."
+    return info;
+
+  } catch (error) {
+
+    console.error(
+      "Send Mail Error:",
+      error
     );
 
-  } catch (err) {
-
-    console.error(err);
-
-    alert(
-      err?.response?.data?.message ||
-      "Failed to send mail."
-    );
+    throw error;
   }
 };

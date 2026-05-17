@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #0a0a0a;
+  --surface: #10101a;
+  --surface-strong: #11101f;
+  --card-bg: rgba(18, 17, 31, 0.96);
+  --panel-border: rgba(109, 40, 217, 0.18);
+  --border-color: rgba(109, 40, 217, 0.22);
+  --accent: #6d28d9;
+  --accent-soft: rgba(109, 40, 217, 0.16);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  --button-shadow: 0 0 0 1px rgba(109, 40, 217, 0.12);
+}
+
 //* =========================================
    RESET
 ========================================= */
@@ -40,15 +56,9 @@ body,
 
 body{
 
-  background:
-    radial-gradient(
-      circle at top,
-      #312e81 0%,
-      #0f172a 42%,
-      #020617 100%
-    );
+  background: var(--bg);
 
-  color:white;
+  color: var(--text-secondary);
 }
 
 body h1,
@@ -824,13 +834,13 @@ body:not(.light) .input-shell{
 
   z-index:100;
 
-  background:
-    rgba(5,8,25,0.82);
+  background: rgba(8, 9, 23, 0.95);
 
-  border-bottom:
-    1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(109, 40, 217, 0.22);
 
-  backdrop-filter:blur(20px);
+  backdrop-filter:blur(22px);
+
+  box-shadow: var(--shadow);
 }
 
 body.light .dashboard-navbar{
@@ -1631,17 +1641,13 @@ body.light .dashboard-card p{
 
   border-radius:32px;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(30,41,59,0.75),
-      rgba(15,23,42,0.92)
-    );
+  background: var(--card-bg);
 
-  border:
-    1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--panel-border);
 
-  backdrop-filter:blur(18px);
+  backdrop-filter: blur(20px);
+
+  box-shadow: var(--shadow);
 }
 
 /* INPUT */
@@ -1657,11 +1663,9 @@ body.light .dashboard-card p{
 
   border-radius:22px;
 
-  background:
-    rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
 
-  border:
-    1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(109, 40, 217, 0.16);
 }
 
 .agent-input-wrapper svg{
@@ -1694,12 +1698,7 @@ body.light .dashboard-card p{
 
   border-radius:16px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #7c3aed,
-      #4f46e5
-    );
+  background: var(--accent);
 
   color:white;
 
@@ -1707,7 +1706,9 @@ body.light .dashboard-card p{
 
   cursor:pointer;
 
-  transition:0.25s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  box-shadow: 0 0 0 1px rgba(109,40,217,0.12);
 }
 
 .agent-run-btn:hover{
@@ -1715,7 +1716,7 @@ body.light .dashboard-card p{
   transform:translateY(-2px);
 
   box-shadow:
-    0 12px 30px rgba(124,58,237,0.35);
+    0 20px 55px rgba(109,40,217,0.33);
 }
 
 /* URL BOX */
@@ -1737,13 +1738,11 @@ body.light .dashboard-card p{
 
   padding:20px;
 
-  background:
-    rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
 
-  border:
-    1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(109, 40, 217, 0.16);
 
-  color:white;
+  color: var(--text-primary);
 
   font-size:1rem;
 
@@ -1783,22 +1782,16 @@ body.light .dashboard-card p{
 
 .export-btn{
 
-  background:
-    linear-gradient(
-      135deg,
-      #7c3aed,
-      #4f46e5
-    );
+  background: linear-gradient(135deg, rgba(109,40,217,1), rgba(99,102,241,1));
 
   color:white;
 }
 
 .mail-btn{
 
-  background:
-    rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
 
-  color:white;
+  color: var(--text-primary);
 }
 
 .export-btn:hover,
@@ -1927,9 +1920,9 @@ body.light .mail-btn{
 
 .results-header span {
 
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(109, 40, 217, 0.16);
 
-  color: #7c3aed;
+  color: #d8b4fe;
 
   padding: 8px 14px;
 
@@ -1950,9 +1943,9 @@ body.light .mail-btn{
 
   border-radius: 18px;
 
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(109, 40, 217, 0.18);
 
-  background: var(--surface-bg);
+  background: rgba(14, 14, 27, 0.95);
 }
 
 /* TABLE */
@@ -2124,17 +2117,11 @@ body.light .results-table td {
 
   border-radius:28px;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(30,41,59,0.75),
-      rgba(15,23,42,0.92)
-    );
+  background: var(--card-bg);
 
-  border:
-    1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--panel-border);
 
-  transition:0.3s;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .history-card:hover{

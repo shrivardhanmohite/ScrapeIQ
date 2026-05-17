@@ -22,6 +22,28 @@ router.post("/save", async (req, res) => {
             return res.status(400).json({ message: "Query required" });
         }
 
+        const duplicate = await Dataset.findOne({
+            query,
+            answer,
+            data,
+            sources,
+            sourceUrls,
+            tables,
+            images,
+            text,
+            charts
+        });
+
+        if (duplicate) {
+            console.log("Duplicate dataset save skipped for query:", query);
+            return res.status(200).json({
+                success: true,
+                message: "Dataset already exists",
+                dataset: duplicate,
+                duplicate: true
+            });
+        }
+
         const dataset = new Dataset({
             query,
             answer,

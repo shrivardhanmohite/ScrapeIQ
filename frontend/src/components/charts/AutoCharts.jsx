@@ -20,6 +20,31 @@ const COLORS = [
   "#4f46e5"
 ];
 
+const hasValidChartData = (chart, data) => {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  const firstRow = data.find((row) => row && typeof row === "object");
+  if (!firstRow) return false;
+
+  if (chart.type === "pie") {
+    if (!chart.dataKey) return false;
+    return data.some((row) => {
+      const value = row?.[chart.dataKey];
+      return value !== undefined && value !== null && String(value).trim() !== "";
+    });
+  }
+
+  if (!chart.xKey || !chart.yKey) return false;
+
+  return data.some((row) => {
+    const x = row?.[chart.xKey];
+    const y = row?.[chart.yKey];
+    return (
+      x !== undefined && x !== null && String(x).trim() !== "" &&
+      y !== undefined && y !== null && !isNaN(parseFloat(y))
+    );
+  });
+};
+
 export default function AutoCharts({
 
   data = [],
@@ -27,13 +52,15 @@ export default function AutoCharts({
   charts = []
 }) {
 
-  if (!charts.length) return null;
+  const validCharts = charts.filter((chart) => hasValidChartData(chart, data));
+
+  if (!validCharts.length) return null;
 
   return (
 
     <div className="charts-grid">
 
-      {charts.map((chart, index) => (
+      {validCharts.map((chart, index) => (
 
         <div
           className="chart-card"

@@ -14,6 +14,8 @@ import axios from "axios";
 
 import AutoCharts from "../components/charts/AutoCharts";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
 export default function Agent() {
 
   const [prompt, setPrompt] = useState("");
@@ -134,22 +136,24 @@ export default function Agent() {
              SAVE DATASET
           ========================= */
 
+          const datasetAnswer =
+            job?.result?.answer ||
+            job?.answer ||
+            "";
+
           if (
             job.status === "completed" &&
-            datasetData.length > 0
+            (datasetData.length > 0 || datasetAnswer)
           ) {
 
             try {
 
               await axios.post(
-                "http://localhost:5000/api/datasets/save",
+                `${API_BASE_URL}/dataset/save`,
                 {
                   query: prompt,
 
-                  answer:
-                    job?.result?.answer ||
-                    job?.answer ||
-                    "",
+                  answer: datasetAnswer,
 
                   data: datasetData,
 
@@ -162,12 +166,19 @@ export default function Agent() {
               console.log(
                 "Dataset saved successfully"
               );
+              window.dispatchEvent(
+                new Event("datasetSaved")
+              );
 
             } catch (saveErr) {
 
               console.error(
                 "Dataset save failed:",
                 saveErr
+              );
+              alert(
+                "Failed to save history: " +
+                (saveErr.response?.data?.message || saveErr.message || "Unknown error")
               );
             }
           }
@@ -259,16 +270,14 @@ export default function Agent() {
      SEND MAIL
   ========================================= */
 
-  const sendMail = async () => {
+  const sendMail = () => {
 
     const dataset =
       result?.result?.data ||
       result?.data;
 
     if (!dataset?.length) {
-
       alert("No dataset available.");
-
       return;
     }
 
@@ -277,34 +286,25 @@ export default function Agent() {
     );
 
     if (!email || !email.trim()) {
-
       return;
     }
 
-    try {
+    const subject = encodeURIComponent(
+      "AI Scraping Dataset"
+    );
+    const body = encodeURIComponent(
+      `Here is the scraped dataset:\n\n${JSON.stringify(
+        dataset,
+        null,
+        2
+      )}`
+    );
 
-      const response = await axios.post(
-        "http://localhost:5000/api/send-mail",
-        {
-          email,
-          data: dataset
-        }
-      );
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      email
+    )}&su=${subject}&body=${body}`;
 
-      alert(
-        response.data.message ||
-        "Dataset mailed successfully."
-      );
-
-    } catch (err) {
-
-      console.error(err);
-
-      alert(
-        err?.response?.data?.message ||
-        "Failed to send mail."
-      );
-    }
+    window.open(gmailUrl, "_blank");
   };
 
   /* =========================================
