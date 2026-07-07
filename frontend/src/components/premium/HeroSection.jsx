@@ -6,7 +6,7 @@ import {
   FaChartBar
 } from "react-icons/fa";
 
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 export default function HeroSection() {
@@ -14,7 +14,7 @@ export default function HeroSection() {
     <section className="hero-section">
 
       {/* LEFT */}
-      <motion.div
+      <Motion.div
         className="hero-copy"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -82,10 +82,10 @@ export default function HeroSection() {
 
         </div>
 
-      </motion.div>
+      </Motion.div>
 
       {/* RIGHT */}
-      <motion.div
+      <Motion.div
         className="hero-product"
         initial={{ opacity: 0, scale: 0.92, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -144,7 +144,7 @@ export default function HeroSection() {
           </div>
         </div>
 
-      </motion.div>
+      </Motion.div>
 
     </section>
   );

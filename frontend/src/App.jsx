@@ -21,6 +21,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Agent from "./pages/Agent";
 import History from "./pages/History";
+import Reports from "./pages/Reports";
 
 /* STYLES */
 
@@ -72,6 +73,11 @@ export default function App() {
         <Route
           path="/history"
           element={<History />}
+        />
+
+        <Route
+          path="/reports"
+          element={<Reports />}
         />
 
         <Route

@@ -1,5 +1,5 @@
 import { BarChart3, History, LogOut, Search, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ThemeToggle from "./ThemeToggle";
@@ -21,7 +21,7 @@ export default function AnimatedSidebar() {
   };
 
   return (
-    <motion.aside
+    <Motion.aside
       className="app-sidebar"
       initial={{ x: -24, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
@@ -46,6 +46,6 @@ export default function AnimatedSidebar() {
           <span>Logout</span>
         </button>
       </div>
-    </motion.aside>
+    </Motion.aside>
   );
 }

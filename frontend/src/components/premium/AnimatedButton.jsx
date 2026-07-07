@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 export default function AnimatedButton({
@@ -20,14 +20,14 @@ export default function AnimatedButton({
 
   if (to) {
     return (
-      <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+      <Motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
         <Link className={className} to={to}>{content}</Link>
-      </motion.div>
+      </Motion.div>
     );
   }
 
   return (
-    <motion.button
+    <Motion.button
       className={className}
       type={type}
       onClick={onClick}
@@ -36,6 +36,6 @@ export default function AnimatedButton({
       whileTap={{ scale: disabled ? 1 : 0.98 }}
     >
       {content}
-    </motion.button>
+    </Motion.button>
   );
 }

@@ -61,6 +61,8 @@ export async function processScrapeJob(jobId, payload) {
             images: result.images || [],
             text: result.text || "",
             charts: result.charts || [],
+            workspaceId: payload.workspaceId || null,
+            workspaceName: payload.workspaceName || "",
             jobId,
             metadata: {
                 mode: payload.mode || "scrape",
@@ -79,6 +81,8 @@ export async function processScrapeJob(jobId, payload) {
             steps: result.steps || [],
             result,
             datasetId: dataset._id,
+            workspaceId: payload.workspaceId || null,
+            workspaceName: payload.workspaceName || "",
             failures: result.failures || [],
             metrics: {
                 sourceCount: result.sources?.length || 0,

@@ -6,6 +6,7 @@ import { extractImages } from "../tools/extractImages.js";
 import { extractCharts } from "../tools/extractCharts.js";
 import { crawlUrls } from "../tools/crawler.js";
 import { askAI } from "../ai/openRouter.js";
+import { generateChartSuggestions } from "../utils/chartGenerator.js";
 
 // 🔥 SMART SCHEMA DETECTION
 export function detectSchema(query){
@@ -359,6 +360,11 @@ export async function runAgent(input, options = {}){
 
             console.log("⚠️ Using fallback data");
 
+            const fallbackData = [
+                { name: "Fallback Item 1", description: "No data", category: "General" },
+                { name: "Fallback Item 2", description: "No data", category: "General" }
+            ];
+
             return {
                 query,
                 steps,
@@ -368,12 +374,9 @@ export async function runAgent(input, options = {}){
                 text: combinedText,
                 tables,
                 images,
-                charts,
+                charts: generateChartSuggestions(fallbackData),
                 failures,
-                data: [
-                    { name: "Fallback Item 1", description: "No data", category: "General" },
-                    { name: "Fallback Item 2", description: "No data", category: "General" }
-                ]
+                data: fallbackData
             };
         }
 
@@ -490,6 +493,8 @@ ${summary}
         steps.push("STRUCTURE_DATA");
         steps.push("FINISH");
 
+        charts = generateChartSuggestions(structuredData);
+
 
         return {
             query,
@@ -509,6 +514,14 @@ ${summary}
 
         console.log("🔥 Agent Error:", error.message);
 
+        const errorData = [
+            {
+                name: "Error",
+                description: error.message,
+                category: "System"
+            }
+        ];
+
         return {
             query: typeof input === "string" ? input : input?.query,
             steps,
@@ -518,7 +531,7 @@ ${summary}
             text: collectedText.join("\n\n"),
             tables,
             images,
-            charts,
+            charts: generateChartSuggestions(errorData),
             failures: [
                 ...failures,
                 {
@@ -527,13 +540,7 @@ ${summary}
                     message: error.message
                 }
             ],
-            data: [
-                {
-                    name: "Error",
-                    description: error.message,
-                    category: "System"
-                }
-            ]
+            data: errorData
         };
     }
 }

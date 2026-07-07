@@ -48,6 +48,17 @@ const datasetSchema = new mongoose.Schema(
         default: [],
     },
 
+    workspaceId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Workspace",
+        default: null,
+    },
+
+    workspaceName: {
+        type: String,
+        default: "",
+    },
+
     jobId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ScrapeJob",

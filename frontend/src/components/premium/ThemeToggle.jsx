@@ -1,48 +1,25 @@
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ThemeToggle() {
-
-  const [light, setLight] = useState(() => {
-
-    return localStorage.getItem("theme") === "light";
-  });
-
-  useEffect(() => {
-
-    if (light) {
-
-      document.body.classList.add("light");
-
-      localStorage.setItem(
-        "theme",
-        "light"
-      );
-
-    } else {
-
-      document.body.classList.remove("light");
-
-      localStorage.setItem(
-        "theme",
-        "dark"
-      );
-    }
-
-  }, [light]);
+  const { theme, toggleTheme } = useTheme();
+  const isLight = theme === "light";
 
   return (
-
     <button
-      className="theme-toggle"
-      onClick={() => setLight(!light)}
+      className={isLight ? "theme-switch theme-switch--light" : "theme-switch"}
+      onClick={toggleTheme}
+      type="button"
+      aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
+      aria-pressed={isLight}
+      title={isLight ? "Switch to dark mode" : "Switch to light mode"}
     >
-
-      {light
-        ? <Moon size={18} />
-        : <Sun size={18} />
-      }
-
+      <span className="theme-switch__track">
+        <span className="theme-switch__thumb">
+          {isLight ? <Sun size={15} /> : <Moon size={15} />}
+        </span>
+      </span>
+      <span className="theme-switch__label">{isLight ? "Light" : "Dark"}</span>
     </button>
   );
 }

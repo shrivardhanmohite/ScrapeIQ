@@ -6,12 +6,16 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem("scrapeiq-theme");
     if (stored === "light" || stored === "dark") return stored;
+    const legacyStored = localStorage.getItem("theme");
+    if (legacyStored === "light" || legacyStored === "dark") return legacyStored;
     return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
   });
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    document.body.classList.toggle("light", theme === "light");
     localStorage.setItem("scrapeiq-theme", theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   const value = useMemo(() => ({

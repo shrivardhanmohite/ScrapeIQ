@@ -1,550 +1,261 @@
 import {
-  Search,
-  Download,
-  Mail,
-  Sparkles,
-  Loader2,
+  BarChart3,
   CheckCircle2,
-  Clock3
+  Clock3,
+  Database,
+  Download,
+  FileText,
+  Loader2,
+  Plus,
+  Search,
+  Sparkles,
 } from "lucide-react";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import axios from "axios";
 
-import AutoCharts from "../components/charts/AutoCharts";
+import {
+  createWorkspace,
+  getWorkspaces,
+  runAgent as apiRunAgent,
+} from "../api/scraperApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
+const workflowSteps = [
+  { id: "query", label: "Research query", detail: "Define the scraping intent" },
+  { id: "scrape", label: "Scraping progress", detail: "Collecting the source evidence" },
+  { id: "dataset", label: "Dataset", detail: "Structuring the extracted rows" },
+  { id: "insights", label: "AI insights", detail: "Summarizing the findings" },
+  { id: "charts", label: "Charts", detail: "Preparing the visuals" },
+  { id: "export", label: "Export", detail: "Delivering the output" },
+];
+
 export default function Agent() {
-
   const [prompt, setPrompt] = useState("");
-
-  const [urls, setUrls] = useState("");
-
   const [loading, setLoading] = useState(false);
-
   const [jobId, setJobId] = useState(null);
-
   const [jobStatus, setJobStatus] = useState(null);
-
   const [result, setResult] = useState(null);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [workspaceId, setWorkspaceId] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
 
-  /* =========================================
-     RUN AGENT
-  ========================================= */
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const list = await getWorkspaces();
+      if (isMounted) {
+        setWorkspaces(list || []);
+        if (list?.length > 0) {
+          setWorkspaceId(list[0]._id);
+          setWorkspaceName(list[0].name);
+        }
+      }
+    })().catch(console.error);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const createWorkspaceHandler = async () => {
+    const name = window.prompt("Enter a new workspace name");
+    if (!name || !name.trim()) {
+      return;
+    }
+
+    try {
+      const workspace = await createWorkspace(name.trim());
+      setWorkspaces((prev) => [workspace, ...prev]);
+      setWorkspaceId(workspace._id);
+      setWorkspaceName(workspace.name);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to create workspace.");
+    }
+  };
 
   const runAgent = async () => {
-
     if (!prompt.trim()) {
-
       alert("Please enter a scraping prompt.");
-
       return;
     }
 
     setLoading(true);
-
     setResult(null);
+    setJobStatus("queued");
 
     try {
-
-      const response = await axios.post(
-        "http://localhost:5000/api/scrape",
-        {
-          query: prompt,
-
-          urls:
-            urls
-              .split("\n")
-              .filter((url) => url.trim()),
-
-          mode: "search",
-
-          maxPages: 10,
-
-          maxDepth: 2
-        }
-      );
-
-      setJobId(response.data.jobId);
-
-      setJobStatus(response.data.status);
-
-      pollJob(response.data.jobId);
-
+      const response = await apiRunAgent(prompt.trim(), workspaceId, workspaceName);
+      setJobId(response.jobId);
+      setJobStatus(response.status);
+      pollJob(response.jobId);
     } catch (err) {
-
       console.error(err);
-
-      setResult({
-        success: false,
-        message: "Failed to run agent."
-      });
-
+      setResult({ success: false, message: "Failed to run agent." });
       setLoading(false);
     }
   };
 
-  /* =========================================
-     POLL JOB
-  ========================================= */
-
   const pollJob = async (id) => {
-
     const interval = setInterval(async () => {
-
       try {
-
-        const response = await axios.get(
-          `http://localhost:5000/api/scrape/jobs/${id}`
-        );
-
+        const response = await axios.get(`${API_BASE_URL}/scrape/jobs/${id}`);
         const job = response.data;
-
-        console.log("JOB RESPONSE:", job);
-
         requestAnimationFrame(() => {
-
           setJobStatus(job.status);
-
         });
 
-        if (
-          job.status === "completed" ||
-          job.status === "failed"
-        ) {
-
+        if (job.status === "completed" || job.status === "failed") {
           clearInterval(interval);
+          const normalizedResult = {
+            ...job.result,
+            _id: job.datasetId || job.result?._id,
+            workspaceId: job.workspaceId || workspaceId || job.result?.workspaceId,
+            workspaceName: job.workspaceName || workspaceName || job.result?.workspaceName,
+          };
 
-          const datasetData =
-            job?.result?.data ||
-            job?.data ||
-            [];
-
-          const datasetCharts =
-            job?.result?.charts ||
-            job?.charts ||
-            [];
-
-          const datasetSources =
-            job?.result?.sources ||
-            job?.sources ||
-            [];
-
-          /* =========================
-             SAVE DATASET
-          ========================= */
-
-          const datasetAnswer =
-            job?.result?.answer ||
-            job?.answer ||
-            "";
-
-          if (
-            job.status === "completed" &&
-            (datasetData.length > 0 || datasetAnswer)
-          ) {
-
-            try {
-
-              await axios.post(
-                `${API_BASE_URL}/dataset/save`,
-                {
-                  query: prompt,
-
-                  answer: datasetAnswer,
-
-                  data: datasetData,
-
-                  sources: datasetSources,
-
-                  charts: datasetCharts
-                }
-              );
-
-              console.log(
-                "Dataset saved successfully"
-              );
-              window.dispatchEvent(
-                new Event("datasetSaved")
-              );
-
-            } catch (saveErr) {
-
-              console.error(
-                "Dataset save failed:",
-                saveErr
-              );
-              alert(
-                "Failed to save history: " +
-                (saveErr.response?.data?.message || saveErr.message || "Unknown error")
-              );
-            }
-          }
-
-          requestAnimationFrame(() => {
-
-            setResult(job);
-
-            setLoading(false);
-
-          });
-        }
-
-      } catch (err) {
-
-        console.error(err);
-
-        clearInterval(interval);
-
-        requestAnimationFrame(() => {
-
+          setResult(normalizedResult);
           setLoading(false);
-
-        });
+        }
+      } catch (err) {
+        console.error(err);
+        clearInterval(interval);
+        setLoading(false);
       }
-
     }, 2000);
   };
 
-  /* =========================================
-     EXPORT CSV
-  ========================================= */
-
   const exportCSV = async () => {
-
-    const dataset =
-      result?.result?.data ||
-      result?.data;
-
+    const dataset = result?.result?.data || result?.data;
     if (!dataset?.length) {
-
       alert("No dataset available.");
-
       return;
     }
 
     try {
-
       const response = await axios.post(
         "http://localhost:5000/api/download-csv",
-        {
-          data: dataset
-        },
-        {
-          responseType: "blob"
-        }
+        { data: dataset },
+        { responseType: "blob" }
       );
-
-      const blob = new Blob(
-        [response.data],
-        { type: "text/csv" }
-      );
-
-      const url =
-        window.URL.createObjectURL(blob);
-
-      const link =
-        document.createElement("a");
-
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
       link.href = url;
-
       link.download = "scrape-results.csv";
-
       document.body.appendChild(link);
-
       link.click();
-
       link.remove();
-
+      URL.revokeObjectURL(url);
     } catch (err) {
-
       console.error(err);
-
       alert("Failed to export CSV.");
     }
   };
 
-  /* =========================================
-     SEND MAIL
-  ========================================= */
-
-  const sendMail = () => {
-
-    const dataset =
-      result?.result?.data ||
-      result?.data;
-
-    if (!dataset?.length) {
-      alert("No dataset available.");
-      return;
-    }
-
-    const email = window.prompt(
-      "Enter recipient email"
-    );
-
-    if (!email || !email.trim()) {
-      return;
-    }
-
-    const subject = encodeURIComponent(
-      "AI Scraping Dataset"
-    );
-    const body = encodeURIComponent(
-      `Here is the scraped dataset:\n\n${JSON.stringify(
-        dataset,
-        null,
-        2
-      )}`
-    );
-
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-      email
-    )}&su=${subject}&body=${body}`;
-
-    window.open(gmailUrl, "_blank");
-  };
-
-  /* =========================================
-     DATA
-  ========================================= */
-
-  const dataset =
-    result?.result?.data ||
-    result?.data ||
-    [];
-
-  const charts =
-    result?.result?.charts ||
-    result?.charts ||
-    [];
+  const datasetRows = result?.result?.data || result?.data || [];
+  const hasResults = Array.isArray(datasetRows) && datasetRows.length > 0;
+  const activeStep = loading ? "scrape" : hasResults ? "export" : jobStatus === "completed" ? "dataset" : "query";
 
   return (
-
     <div className="agent-page">
-
-      {/* HERO */}
-
       <section className="agent-hero">
-
         <span className="eyebrow">
-
           <Sparkles size={15} />
-
-          AI Scraping Agent
-
+          Research workspace
         </span>
-
-        <h1>
-          Extract intelligence from the web.
-        </h1>
-
-        <p>
-          Crawl websites, extract datasets,
-          generate charts, and export insights.
-        </p>
-
+        <h1>Run a focused research flow from query to export.</h1>
+        <p>Enter a research brief, track the scraping progress, inspect the dataset, and export the results without extra clutter.</p>
       </section>
 
-      {/* PANEL */}
-
       <section className="agent-panel">
-
         <div className="agent-input-wrapper">
-
           <Search size={20} />
-
           <input
             type="text"
             placeholder="Describe what you want to scrape..."
             value={prompt}
-            onChange={(e) =>
-              setPrompt(e.target.value)
-            }
+            onChange={(event) => setPrompt(event.target.value)}
           />
-
-          <button
-            className="agent-run-btn"
-            onClick={runAgent}
-            disabled={loading}
-          >
-
+          <button className="agent-run-btn" onClick={runAgent} disabled={loading}>
             {loading ? (
               <>
-                <Loader2
-                  className="spin"
-                  size={18}
-                />
+                <Loader2 className="spin" size={18} />
                 Running
               </>
             ) : (
-              "Run Agent"
+              "Run research"
             )}
-
           </button>
-
         </div>
 
-        <textarea
-          className="agent-url-box"
-          placeholder="Optional URLs (one per line)"
-          value={urls}
-          onChange={(e) =>
-            setUrls(e.target.value)
-          }
-        />
-
-        <div className="agent-actions">
-
-          <button
-            className="export-btn"
-            onClick={exportCSV}
-          >
-
-            <Download size={18} />
-
-            Export CSV
-
-          </button>
-
-          <button
-            className="mail-btn"
-            onClick={sendMail}
-          >
-
-            <Mail size={18} />
-
-            Send via Mail
-
-          </button>
-
-        </div>
-
-      </section>
-
-      {/* STATUS */}
-
-      {(jobStatus || loading) && (
-
-        <section className="job-status-card">
-
-          <div className="job-status-top">
-
-            {jobStatus === "completed"
-              ? <CheckCircle2 size={22} />
-              : <Clock3 size={22} />
-            }
-
-            <h3>
-
-              {jobStatus === "completed"
-                ? "Scraping Completed"
-                : "Scraping in Progress"}
-
-            </h3>
-
+        <div className="workspace-row">
+          <div className="workspace-select-label">Save into workspace</div>
+          <div className="workspace-select-group">
+            <select
+              value={workspaceId}
+              onChange={(event) => {
+                const selected = workspaces.find((workspace) => workspace._id === event.target.value);
+                setWorkspaceId(event.target.value);
+                setWorkspaceName(selected?.name || "");
+              }}
+            >
+              <option value="">No workspace</option>
+              {workspaces.map((workspace) => (
+                <option key={workspace._id} value={workspace._id}>
+                  {workspace.name}
+                </option>
+              ))}
+            </select>
+            <button className="create-workspace-btn" onClick={createWorkspaceHandler}>
+              <Plus size={16} /> Create
+            </button>
           </div>
+        </div>
 
-          {jobId && (
+        <div className="agent-flow-list">
+          {workflowSteps.map((step) => (
+            <div className={`agent-flow-item ${activeStep === step.id ? "agent-flow-item--active" : ""}`} key={step.id}>
+              <div className="agent-flow-item__icon">
+                {step.id === "export" ? <Download size={16} /> : step.id === "dataset" ? <Database size={16} /> : step.id === "charts" ? <BarChart3 size={16} /> : step.id === "insights" ? <FileText size={16} /> : step.id === "scrape" ? <Clock3 size={16} /> : <Search size={16} />}
+              </div>
+              <div>
+                <strong>{step.label}</strong>
+                <p>{step.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-            <p>
-              Job ID:
-              <strong> {jobId}</strong>
-            </p>
-
-          )}
-
-          <p>
-            Current Status:
-            <strong> {jobStatus}</strong>
-          </p>
-
-        </section>
-      )}
-
-      {/* RESULTS */}
-
-      {dataset.length > 0 && (
-
-        <>
-          <section className="agent-results">
-
-            <div className="results-header">
-
-              <h2>
-                Results
-              </h2>
-
-              <span>
-                {dataset.length} rows
-              </span>
-
+        {(jobStatus || loading || hasResults) && (
+          <div className="agent-results-summary">
+            <div className="agent-results-summary__header">
+              <div>
+                <span>Execution status</span>
+                <h3>{jobStatus === "completed" ? "Research completed" : loading ? "Research in progress" : "Awaiting results"}</h3>
+              </div>
+              {jobStatus === "completed" ? <CheckCircle2 size={18} /> : <Clock3 size={18} />}
             </div>
 
-            <div className="results-table-wrapper">
+            {jobId && <p className="agent-results-summary__meta">Job ID: {jobId}</p>}
 
-              <table className="results-table">
-
-                <thead>
-
-                  <tr>
-
-                    {Object.keys(
-                      dataset[0]
-                    ).map((key) => (
-
-                      <th key={key}>
-                        {key}
-                      </th>
-                    ))}
-
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {dataset.map(
-                    (row, index) => (
-
-                      <tr key={index}>
-
-                        {Object.values(row).map(
-                          (value, idx) => (
-
-                            <td key={idx}>
-                              {String(value)}
-                            </td>
-                          )
-                        )}
-
-                      </tr>
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          </section>
-
-          {/* CHARTS */}
-
-          {charts.length > 0 && (
-
-            <AutoCharts
-              data={dataset}
-              charts={charts}
-            />
-          )}
-
-        </>
-      )}
-
+            {hasResults ? (
+              <>
+                <p className="agent-results-summary__meta">Rows collected: {datasetRows.length}</p>
+                <div className="agent-action-row">
+                  <button className="export-btn" onClick={exportCSV}>
+                    <Download size={16} />
+                    Export CSV
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="agent-results-summary__meta">The selected workflow stage will update here as the research completes.</p>
+            )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

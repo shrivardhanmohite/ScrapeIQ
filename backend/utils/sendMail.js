@@ -1,12 +1,15 @@
 import nodemailer from "nodemailer";
 
-export const sendDatasetMail = async (
-  to,
-  subject,
-  text
-) => {
+export const sendDatasetMail = async (...args) => {
 
   try {
+    const options = typeof args[0] === "object"
+      ? args[0]
+      : {
+          to: args[0],
+          subject: args[1],
+          text: args[2]
+        };
 
     const transporter =
       nodemailer.createTransport({
@@ -19,9 +22,11 @@ export const sendDatasetMail = async (
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to,
-      subject,
-      text,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+      attachments: options.attachments || []
     };
 
     const info =
